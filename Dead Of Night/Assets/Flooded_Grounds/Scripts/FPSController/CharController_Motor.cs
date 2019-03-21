@@ -13,11 +13,17 @@ public class CharController_Motor : MonoBehaviour {
 	float rotX, rotY;
 	public bool webGLRightClickRotation = true;
 	float gravity = -9.8f;
+    public bool alive = true;
+    Animator animator;
+    public GameObject postProcessor;
 
-
-	void Start(){
-		//LockCursor ();
-		character = GetComponent<CharacterController> ();
+    void Start(){
+        //LockCursor ();
+        animator = GetComponent<Animator>();
+        animator.SetBool("alive", alive);
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+        character = GetComponent<CharacterController> ();
 		if (Application.isEditor) {
 			webGLRightClickRotation = false;
 			sensitivity = sensitivity * 1.5f;
@@ -36,6 +42,7 @@ public class CharController_Motor : MonoBehaviour {
 
 
 	void Update(){
+        if (!alive) return;
 		moveFB = Input.GetAxis ("Horizontal") * speed;
 		moveLR = Input.GetAxis ("Vertical") * speed;
 
@@ -50,8 +57,6 @@ public class CharController_Motor : MonoBehaviour {
 
 		Vector3 movement = new Vector3 (moveFB, gravity, moveLR);
 
-
-
 		if (webGLRightClickRotation) {
 			if (Input.GetKey (KeyCode.Mouse0)) {
 				CameraRotation (cam, rotX, rotY);
@@ -65,12 +70,20 @@ public class CharController_Motor : MonoBehaviour {
 	}
 
 
-	void CameraRotation(GameObject cam, float rotX, float rotY){		
+	void CameraRotation(GameObject cam, float rotX, float rotY)
+    {		
 		transform.Rotate (0, rotX * Time.deltaTime, 0);
 		cam.transform.Rotate (-rotY * Time.deltaTime, 0, 0);
 	}
 
-
-
-
+    public void Die(GameObject killer)
+    {
+        transform.LookAt(killer.transform);
+        GetComponent<CapsuleCollider>().enabled = false;
+        alive = false;
+        animator.SetBool("alive", alive);
+        GetComponent<CharacterController>().enabled = false;
+        postProcessor.GetComponent<lerp>().begin();
+        this.enabled = false;
+    }
 }
